@@ -10,6 +10,6 @@ struct AppConfig {
     /// Fitur Tarik untuk Refresh (Pull to Refresh)
     static let enablePullToRefresh: Bool = true
     
-    /// Navigasi Geser Layar (Swipe to Go Back / Forward)
-    static let enableSwipeGestures: Bool = true
+    /// Navigasi Geser Layar Dimatikan (Mencegah tampilan layar tergeser ke samping di Single Page App)
+    static let enableSwipeGestures: Bool = false
 }
