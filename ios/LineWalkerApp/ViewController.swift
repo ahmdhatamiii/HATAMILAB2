@@ -32,6 +32,71 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         config.defaultWebpagePreferences.allowsContentJavaScript = true
 
         let userContentController = WKUserContentController()
+
+        // Injeksi skrip untuk menyembunyikan banner peringatan Google Apps Script dan mengunci lebar frame 100vw
+        let fixGoogleScriptString = """
+        (function() {
+            var css = `
+                .docs-butterbar-container, #docs-butterbar-container, .butterbar, [class*="butterbar"], div[role="alert"], table[class*="butterbar"] {
+                    display: none !important;
+                    visibility: hidden !important;
+                    height: 0 !important;
+                    min-height: 0 !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    overflow: hidden !important;
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                }
+                html, body {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    width: 100vw !important;
+                    max-width: 100vw !important;
+                    min-width: 100vw !important;
+                    overflow-x: hidden !important;
+                    overscroll-behavior-x: none !important;
+                    touch-action: pan-y !important;
+                    -webkit-text-size-adjust: 100% !important;
+                    position: relative !important;
+                }
+                iframe, #sandboxFrame, .punch-present-iframe {
+                    width: 100vw !important;
+                    max-width: 100vw !important;
+                    min-width: 100vw !important;
+                    border: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    overflow-x: hidden !important;
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    bottom: 0 !important;
+                    right: 0 !important;
+                    height: 100vh !important;
+                }
+            `;
+            var style = document.createElement('style');
+            style.type = 'text/css';
+            style.appendChild(document.createTextNode(css));
+            (document.head || document.documentElement).appendChild(style);
+
+            // Pasang meta viewport pengunci
+            var meta = document.querySelector('meta[name="viewport"]');
+            if (!meta) {
+                meta = document.createElement('meta');
+                meta.name = 'viewport';
+                (document.head || document.documentElement).appendChild(meta);
+            }
+            meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+        })();
+        """
+
+        let fixScriptStart = WKUserScript(source: fixGoogleScriptString, injectionTime: .atDocumentStart, forMainFrameOnly: false)
+        let fixScriptEnd = WKUserScript(source: fixGoogleScriptString, injectionTime: .atDocumentEnd, forMainFrameOnly: false)
+        userContentController.addUserScript(fixScriptStart)
+        userContentController.addUserScript(fixScriptEnd)
+
         config.userContentController = userContentController
 
         webView = WKWebView(frame: .zero, configuration: config)
@@ -137,6 +202,15 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         if let refresh = refreshControl, refresh.isRefreshing {
             refresh.endRefreshing()
         }
+        
+        // Pembersihan tambahan saat render selesai
+        let cleanupJS = """
+        var butterbars = document.querySelectorAll('.docs-butterbar-container, #docs-butterbar-container, .butterbar, [class*="butterbar"], div[role="alert"]');
+        butterbars.forEach(function(el) { el.remove(); });
+        document.body.style.overflowX = 'hidden';
+        document.documentElement.style.overflowX = 'hidden';
+        """
+        webView.evaluateJavaScript(cleanupJS, completionHandler: nil)
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
