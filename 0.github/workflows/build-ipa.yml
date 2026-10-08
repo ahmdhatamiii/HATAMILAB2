@@ -1,0 +1,54 @@
+name: Build iOS IPA (LiveContainer)
+
+on:
+  workflow_dispatch: # Memungkinkan tombol 'Run workflow' manual di tab Actions GitHub
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'ios/**'
+      - '.github/workflows/build-ipa.yml'
+
+jobs:
+  build-ipa:
+    name: Build Line Walker IPA
+    runs-on: macos-14
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Set up Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+          xcodebuild -version
+
+      - name: 🔨 Compile iOS App (Unsigned for LiveContainer)
+        run: |
+          xcodebuild clean build \
+            -project ios/LineWalkerApp.xcodeproj \
+            -scheme LineWalkerApp \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+      - name: 📦 Package .app to .ipa
+        run: |
+          mkdir -p Payload
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "*.app" -type d | head -n 1)
+          echo "Found compiled app at: $APP_PATH"
+          cp -r "$APP_PATH" Payload/
+          zip -r -y LineWalker-PLN-UPT-Semarang.ipa Payload
+          ls -lh LineWalker-PLN-UPT-Semarang.ipa
+
+      - name: 🚀 Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LineWalker-PLN-UPT-Semarang-IPA
+          path: LineWalker-PLN-UPT-Semarang.ipa
+          retention-days: 14
