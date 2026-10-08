@@ -21,7 +21,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
     }
 
     private func setupUI() {
-        view.backgroundColor = UIColor(red: 10/255.0, green: 25/255.0, blue: 47/255.0, alpha: 1.0) // Deep Navy PLN Theme
+        view.backgroundColor = UIColor(red: 244/255.0, green: 245/255.0, blue: 247/255.0, alpha: 1.0) // App canvas background (#f4f5f7)
     }
 
     private func setupWebView() {
@@ -37,10 +37,16 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
         webView.uiDelegate = self
-        webView.allowsBackForwardNavigationGestures = AppConfig.enableSwipeGestures
-        webView.backgroundColor = UIColor(red: 10/255.0, green: 25/255.0, blue: 47/255.0, alpha: 1.0)
+        webView.allowsBackForwardNavigationGestures = false
+        webView.backgroundColor = UIColor(red: 244/255.0, green: 245/255.0, blue: 247/255.0, alpha: 1.0)
         webView.isOpaque = false
-        webView.scrollView.contentInsetAdjustmentBehavior = .always
+        
+        // Lock horizontal scrolling and bounce strictly
+        webView.scrollView.alwaysBounceHorizontal = false
+        webView.scrollView.showsHorizontalScrollIndicator = false
+        webView.scrollView.isDirectionalLockEnabled = true
+        webView.scrollView.alwaysBounceVertical = true
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
         
         // Custom Safari User Agent to ensure full Google Auth compatibility
         webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1 LineWalkerApp/1.0"
@@ -65,13 +71,13 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         // Pull to refresh
         if AppConfig.enablePullToRefresh {
             refreshControl = UIRefreshControl()
-            refreshControl.tintColor = UIColor(red: 254/255.0, green: 219/255.0, blue: 0/255.0, alpha: 1.0)
+            refreshControl.tintColor = UIColor(red: 0/255.0, green: 162/255.0, blue: 232/255.0, alpha: 1.0)
             refreshControl.addTarget(self, action: #selector(handleRefresh), for: .valueChanged)
             webView.scrollView.addSubview(refreshControl)
         }
 
         NSLayoutConstraint.activate([
-            webView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            webView.topAnchor.constraint(equalTo: view.topAnchor),
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
